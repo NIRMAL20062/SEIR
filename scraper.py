@@ -2,23 +2,38 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 
-url = sys.argv[1]
+
+def title(soup):
+    if soup.title and soup.title.string:
+        return soup.title.get_text(strip=True)
+    return "No title found"
+
+def body(soup):
+    if soup.body:
+        return soup.body.get_text(" ", strip=True)
+    return "No body content found"
+
+def links(soup):
+    links = soup.find_all("a", href=True)
+    if links:
+        return [link["href"] for link in links]
+    return []
+
+if len(sys.argv) != 2:
+    sys.exit(1)
+url = sys.argv[1].strip()
+if not url.startswith(("http://", "https://")):
+    url = "https://" + url
+
 response = requests.get(url)
-soup = BeautifulSoup(response.text, 'html.parser')
+soup = BeautifulSoup(response.content, "html.parser")
 
-print("Title:")
-print(soup.title.get_text().strip() 
-      if soup.title 
-      else "(no title found)")
+print(title(soup))
+print(body(soup))
 
-print("\nBody:")
-if soup.body:
-    print(soup.body.get_text(separator=' ', strip=True))
-else:    
-    print("(no body found)")
-
-print("\nLinks:")
-for a in soup.find_all('a'):
-    link = a.get('href')
-    if link:
-        print(link) 
+links = links(soup)
+if links:
+    for link in links:
+        print(link)
+else:
+    print("No links found")
